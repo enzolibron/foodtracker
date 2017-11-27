@@ -29,6 +29,15 @@ class MealViewController: UIViewController, UITextFieldDelegate, UIImagePickerCo
         // handle's nameTextField user input through delegate callbacks
         nameTextField.delegate = self
         
+        //set up views if editing an existing meal
+        if let meal = meal {
+            navigationItem.title = meal.name
+            nameTextField.text = meal.name
+            photoImageView.image = meal.photo
+            ratingControl.rating = meal.rating
+            
+        }
+        
         // Enable the Save button only if the text field has a valid Meal name.
         updateSaveButtonState()
     }
@@ -45,16 +54,17 @@ class MealViewController: UIViewController, UITextFieldDelegate, UIImagePickerCo
         return true
     }
     
+    
     func textFieldDidEndEditing(_ textField: UITextField) {
-       updateSaveButtonState()
+        updateSaveButtonState()
         navigationItem.title = textField.text
     }
-    
+ 
     func textFieldDidBeginEditing(_ textField: UITextField) {
         // Disable the Save button while editing.
         saveButton.isEnabled = false
     }
-    
+ 
     //MARK: UIImagePickerControllerDelegate
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         // Dismiss the picker if the user canceled.
@@ -98,7 +108,21 @@ class MealViewController: UIViewController, UITextFieldDelegate, UIImagePickerCo
     
     
     @IBAction func cancel(_ sender: UIBarButtonItem) {
-        dismiss(animated: true, completion: nil)
+        
+        //this checks if the scene was presented modally. If yes, it dismisses.
+        let isPresentingInAddMealMode = presentingViewController is UINavigationController
+        if isPresentingInAddMealMode {
+            dismiss(animated: true, completion: nil)
+        } else if let owningNavigationController = navigationController{ //this line of code runs if it is not modally. It also checks if it is from a push navigation
+            owningNavigationController.popViewController(animated: true)
+        } else {
+            fatalError("The MealViewController is not inside a navigation controller.")
+        }
+        
+        
+        
+        
+        
     }
     
     //MARK: Actions

@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import os.log
 
 class MealTableViewController: UITableViewController {
     
@@ -21,6 +22,9 @@ class MealTableViewController: UITableViewController {
 
         // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
         // self.navigationItem.rightBarButtonItem = self.editButtonItem
+        
+        // Use the edit button item provided by the table view controller.
+        navigationItem.leftBarButtonItem = editButtonItem
         
         // Load the sample date
         loadSampleMeals()
@@ -62,25 +66,26 @@ class MealTableViewController: UITableViewController {
     }
     
 
-    /*
+    
     // Override to support conditional editing of the table view.
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         // Return false if you do not want the specified item to be editable.
         return true
     }
-    */
+ 
 
-    /*
+    
     // Override to support editing the table view.
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             // Delete the row from the data source
+            meals.remove(at: indexPath.row)
             tableView.deleteRows(at: [indexPath], with: .fade)
         } else if editingStyle == .insert {
             // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
         }    
     }
-    */
+    
 
     /*
     // Override to support rearranging the table view.
@@ -97,33 +102,52 @@ class MealTableViewController: UITableViewController {
     }
     */
 
-    /*
+    
     // MARK: - Navigation
 
     // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
+        super.prepare(for: segue, sender: sender)
+        
+        switch(segue.identifier ?? ""){
+            case "addItem":
+                os_log("Adding a new meal.", log: OSLog.default, type: .debug)
+            case "ShowDetail":
+                guard let mealDetailViewController = segue.destination as? MealViewController else {
+                    fatalError("Unexpected destination: \(segue.destination)")
+                }
+                
+                guard let selectedMealCell = sender as? MealTableViewCell else {
+                    fatalError("Unexpected sender: \(String(describing: sender))")
+                }
+                
+                guard let indexPath = tableView.indexPath(for: selectedMealCell) else {
+                    fatalError("The selected cell is not being displayed by the table")
+                }
+                
+                let selectedMeal = meals[indexPath.row]
+                mealDetailViewController.meal = selectedMeal
+            default:
+                fatalError("Unexpected Segue Identifier; \(String(describing: segue.identifier))")
+        
+            
+        }
     }
-    */
+ 
     
     //MARK: Actions
     @IBAction func unwindToMealList(sender: UIStoryboardSegue) {
         if let sourceViewController = sender.source as? MealViewController, let meal = sourceViewController.meal {
+            
+            if let selectedIndexPath = tableView.indexPathForSelectedRow {
+                meals[selectedIndexPath.row] = meal
+                tableView.reloadRows(at: [selectedIndexPath], with: .none)
+            } else {
             // Add a new meal.
-            /*
-             This code computes the location in the table view where the new table view cell representing the new meal will be inserted, and stores it in a local constant called newIndexPath.
-
-             */
-            let newIndexPath = IndexPath(row: meals.count, section: 0)
-            
-            //This adds the new meal to the existing list of meals in the data model.
-            meals.append(meal)
-            
-            /*
-                 This animates the addition of a new row to the table view for the cell that contains information about the new meal. The .automatic animation option uses the best animation based on the table’s current state, and the insertion point’s location.
-            */
-            tableView.insertRows(at: [newIndexPath], with: .automatic)
+                let newIndexPath = IndexPath(row: meals.count, section: 0)
+                meals.append(meal)
+                tableView.insertRows(at: [newIndexPath], with: .automatic)
+            }
         }
     }
     
